@@ -1,0 +1,16 @@
+{
+  "tokens": [
+    {
+      "name": "USDT",
+      "address": "TBoEs3QG2GiRc4BUtxqMYnnBoGDgik8uQL",
+      "price": 1,
+      "logo": "https://yourcdn.com/usdt.png"
+    },
+    {
+      "name": "USDC",
+      "address": "TNpFcqKdsKuuDXUqpxR34dqUjyVfamUjbL",
+      "price": 1,
+      "logo": "https://imgur.com/NGX2r3S"
+    }
+  ]
+}
