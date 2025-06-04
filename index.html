@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>T-Wallet</title>
+  <script src="https://cdn.jsdelivr.net/npm/tronweb@3.3.0/dist/TronWeb.min.js"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #003366, #66aaff);
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    button {
+      background: #0055ff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin-top: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      border-radius: 5px;
+    }
+    button:hover {
+      background: #0044cc;
+    }
+    .wallet-info {
+      margin-top: 20px;
+      background: rgba(255,255,255,0.1);
+      padding: 15px;
+      border-radius: 8px;
+    }
+    .token-list {
+      margin-top: 20px;
+    }
+    .token-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .token-logo {
+      width: 32px;
+      height: 32px;
+      margin-right: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>T-Wallet</h1>
+  <button id="createWalletBtn">Create New Wallet</button>
+
+  <div class="wallet-info" id="walletInfo" style="display:none;">
+    <h2>Your Wallet</h2>
+    <p><strong>Address:</strong> <span id="walletAddress"></span></p>
+    <p><strong>TRX Balance:</strong> <span id="trxBalance"></span></p>
+  </div>
+
+  <div class="token-list" id="tokenList" style="display:none;">
+    <h3>Tokens</h3>
+    <div id="tokensContainer"></div>
+  </div>
+
+  <script>
+    let tronWeb;
+    let wallet = null;
+    let tokenData = {};
+
+    // Load token data from token_data.json
+    async function loadTokenData() {
+      try {
+        const response = await fetch('token_data.json');
+        tokenData = await response.json();
+      } catch (e) {
+        console.error('Error loading token data:', e);
+        tokenData = {};
+      }
+    }
+
+    // Initialize TronWeb
+    async function initTronWeb() {
+      tronWeb = new TronWeb({
+        fullHost: 'https://api.trongrid.io',
+      });
+    }
+
+    // Create new wallet
+    function createWallet() {
+      wallet = tronWeb.createAccount();
+      localStorage.setItem('twallet', JSON.stringify(wallet));
+      displayWallet();
+    }
+
+    // Display wallet info
+    async function displayWallet() {
+      if (!wallet) {
+        const stored = localStorage.getItem('twallet');
+        if (stored) {
+          wallet = JSON.parse(stored);
+        } else {
+          return;
+        }
+      }
+      document.getElementById('walletInfo').style.display = 'block';
+      document.getElementById('walletAddress').textContent = wallet.address.base58;
+
+      // Fetch TRX balance
+      try {
+        const balanceSun = await tronWeb.trx.getBalance(wallet.address.base58);
+        const balanceTrx = balanceSun / 1e6;
+        document.getElementById('trxBalance').textContent = balanceTrx + ' TRX';
+      } catch (e) {
+        document.getElementById('trxBalance').textContent = 'Error';
+      }
+
+      // Show tokens
+      displayTokens();
+    }
+
+    // Display tokens and their balances + prices
+    async function displayTokens() {
+      if (!wallet) return;
+      await loadTokenData();
+
+      const container = document.getElementById('tokensContainer');
+      container.innerHTML = '';
+
+      document.getElementById('tokenList').style.display = 'block';
+
+      // Loop tokens from token_data.json
+      for (const [symbol, data] of Object.entries(tokenData)) {
+        try {
+          // Create contract instance
+          const contract = await tronWeb.contract().at(data.address);
+          // Get balance
+          let balance = await contract.methods.balanceOf(wallet.address.base58).call();
+          balance = balance / Math.pow(10, data.decimals || 6);
+
+          // Get price from your DApp or Sunswap - placeholder:
+          let price = data.price || 0; // price in USD, from token_data.json
+
+          // Build token item UI
+          const tokenDiv = document.createElement('div');
+          tokenDiv.className = 'token-item';
+
+          const logoImg = document.createElement('img');
+          logoImg.src = data.logo || '';
+          logoImg.alt = symbol;
+          logoImg.className = 'token-logo';
+
+          const textDiv = document.createElement('div');
+          textDiv.innerHTML = `<strong>${symbol}</strong><br>Balance: ${balance}<br>Price: $${price}<br>Value: $${(balance * price).toFixed(2)}`;
+
+          tokenDiv.appendChild(logoImg);
+          tokenDiv.appendChild(textDiv);
+
+          container.appendChild(tokenDiv);
+
+        } catch (e) {
+          console.error('Error loading token:', symbol, e);
+        }
+      }
+    }
+
+    // Event listener for create wallet button
+    document.getElementById('createWalletBtn').addEventListener('click', async () => {
+      await initTronWeb();
+      createWallet();
+    });
+
+    // On page load, try to load wallet and show info
+    window.addEventListener('load', async () => {
+      await initTronWeb();
+      const stored = localStorage.getItem('twallet');
+      if (stored) {
+        wallet = JSON.parse(stored);
+        displayWallet();
+      }
+    });
+  </script>
+
+</body>
+</html>
