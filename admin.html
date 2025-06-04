@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>T-Wallet Token Manager</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #e0f7fa;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 320px;
+    }
+    h2 {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    input, button {
+      margin: 8px 0;
+      padding: 12px;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+    button {
+      background: #0288d1;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0277bd;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Add New Token</h2>
+    <input id="name" placeholder="Token Name" required>
+    <input id="address" placeholder="Contract Address" required>
+    <input id="price" placeholder="Price (USD)" required>
+    <input id="logo" placeholder="Logo URL" required>
+    <button onclick="addToken()">Add Token</button>
+  </div>
+
+  <script>
+    function addToken() {
+      const name = document.getElementById("name").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const price = document.getElementById("price").value.trim();
+      const logo = document.getElementById("logo").value.trim();
+
+      if (!name || !address || !price || !logo) {
+        alert("All fields are required.");
+        return;
+      }
+
+      const token = { name, address, price, logo };
+      let tokens = JSON.parse(localStorage.getItem("tokens") || "[]");
+      tokens.push(token);
+      localStorage.setItem("tokens", JSON.stringify(tokens));
+      alert("Token added successfully.");
+      document.getElementById("name").value = "";
+      document.getElementById("address").value = "";
+      document.getElementById("price").value = "";
+      document.getElementById("logo").value = "";
+    }
+  </script>
+</body>
+</html>
